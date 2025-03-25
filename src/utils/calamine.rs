@@ -4,6 +4,8 @@ use polars::prelude::*;
 use serde::Deserialize;
 use std::error::Error;
 use std::path::Path;
+use serde_json::{Value, json};
+use crate::ApiResponse;
 
 #[derive(Deserialize)]
 pub struct ExcelQuery {
@@ -70,44 +72,39 @@ pub fn read_excel<P: AsRef<Path>>(file_path: P) -> Result<DataFrame, Box<dyn Err
 pub async fn read_excel_handler(query: web::Query<ExcelQuery>) -> impl Responder {
     match read_excel(&query.file_path) {
         Ok(mut df) => {
-            // 使用 JsonWriter 将 DataFrame 转换为 JSON 字符串
             let mut buffer = Vec::new();
+
+            // 将 DataFrame 转换为 JSON
             if JsonWriter::new(&mut buffer)
                 .with_json_format(JsonFormat::Json)
                 .finish(&mut df)
                 .is_err()
             {
-                return HttpResponse::InternalServerError().body("将 DataFrame 转换为 JSON 时出错");
+                return HttpResponse::InternalServerError().json(ApiResponse {
+                    code: 500,
+                    message: "DataFrame 转 JSON 失败".to_string(),
+                    data: Value::Null,
+                });
             }
-            match String::from_utf8(buffer) {
-                Ok(json_data) => HttpResponse::Ok().json(json_data),
-                Err(e) => HttpResponse::InternalServerError().body(format!("将 JSON 数据转换为字符串时出错：{}", e)),
+
+            // 解析 JSON 字符串为 serde_json::Value
+            match serde_json::from_slice::<Value>(&buffer) {
+                Ok(json_value) => HttpResponse::Ok().json(ApiResponse {
+                    code: 200,
+                    message: "文件解析成功".to_string(),
+                    data: json_value,  // 直接使用解析后的 JSON
+                }),
+                Err(e) => HttpResponse::InternalServerError().json(ApiResponse {
+                    code: 500,
+                    message: "JSON 解析失败".to_string(),
+                    data: json!({"error": e.to_string()}),
+                }),
             }
         },
-        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+        Err(e) => HttpResponse::InternalServerError().json(ApiResponse {
+            code: 500,
+            message: "读取 Excel 失败".to_string(),
+            data: json!({"error": e.to_string()}),
+        }),
     }
 }
-
-// #[actix_web::main]
-// async fn main() -> std::io::Result<()> {
-//     // 命令行测试部分
-//     let file_path = "test.xlsx"; // 请确保该文件存在于项目根目录
-//
-//     match read_excel(file_path) {
-//         Ok(df) => {
-//             println!("成功读取 DataFrame：\n{}", df);
-//         },
-//         Err(e) => {
-//             eprintln!("读取 Excel 文件失败：{}", e);
-//         },
-//     }
-//
-//     // 启动 actix-web 服务器，测试 Web 接口
-//     println!("启动服务器：访问 http://127.0.0.1:8080/read_excel?file_path=test.xlsx");
-//     HttpServer::new(|| {
-//         App::new().route("/read_excel", web::get().to(read_excel_handler))
-//     })
-//         .bind("127.0.0.1:8080")?
-//         .run()
-//         .await
-// }

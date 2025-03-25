@@ -2,9 +2,12 @@ use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
 use anyhow::Result;
 use dotenv::dotenv;
 use std::env;
-use crate::handers::warehouse;
+use crate::handers::{ warehouse,sku,inventory };
 use crate::config::database::create_pool;
 use crate::utils::calamine;
+
+use crate::models::api_response;
+pub use api_response::ApiResponse;
 
 mod models;
 mod handers;
@@ -36,7 +39,8 @@ async fn main() -> Result<()> {
             // .route("/read_excel", web::get().to(crate::calamine::read_excel_handler))
             .route("/warehouse", web::get().to(warehouse::warehouse))
             .route("/read_excel", web::get().to(calamine::read_excel_handler))
-
+            .route("/get_all_sku", web::get().to(sku::skus))
+            .route("/inventories",web::get().to(inventory::inventories))
     })
         .bind(("127.0.0.1", 8080))?
         .run()

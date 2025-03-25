@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Warehouse {
     pub id: i32,
-    pub code: String,
+    pub warehouse_id: String,
     pub name: String,
     pub is_main: bool,
     pub address: String,
