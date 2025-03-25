@@ -7,7 +7,7 @@ use crate::config::database::create_pool;
 use crate::utils::calamine;
 
 use crate::models::api_response;
-pub use api_response::ApiResponse;
+pub use api_response::{ApiResponse,ErrorDetail};
 
 mod models;
 mod handers;

@@ -8,6 +8,6 @@ pub struct Inventory {
     pub bin_id: i32,
     pub sku: String,
     pub quantity: i32,
-    pub safety_stock: i32,
+    pub safety_stock: Option<i32>,
     pub last_updated: DateTime<Utc>,
 }
