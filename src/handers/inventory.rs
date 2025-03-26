@@ -9,7 +9,7 @@ pub async fn inventories(pool: web::Data<DbPool>) -> impl Responder {
         Ok(inventory) => HttpResponse::Ok().json(ApiResponse{
             code: 200,
             message: "success".to_string(),
-            data: inventory
+            data: Some(inventory)
         }),
         Err(e) => HttpResponse::InternalServerError().json(json!({ "error": e })),
     }

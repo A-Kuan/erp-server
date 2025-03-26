@@ -9,7 +9,7 @@ pub async fn skus(pool: web::Data<DbPool>) -> impl Responder {
         Ok(sku) => HttpResponse::Ok().json(ApiResponse{
             code: 200,
             message: "success".to_string(),
-            data: sku
+            data: Some(sku)
         }),
         Err(e) => HttpResponse::InternalServerError().json(json!({ "error": e })),
     }

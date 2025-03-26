@@ -9,7 +9,7 @@ pub async fn warehouse(pool: web::Data<DbPool>) -> impl Responder {
         Ok(warehouses) => HttpResponse::Ok().json(ApiResponse{
             code: 200,
             message: "success".to_string(),
-            data: warehouses
+            data: Some(warehouses)
         }),
         Err(e) => HttpResponse::InternalServerError().json(json!({ "error": e })),
     }
