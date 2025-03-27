@@ -7,7 +7,7 @@ use crate::config::database::create_pool;
 use crate::utils::calamine;
 
 use crate::models::api_response;
-pub use api_response::{ApiResponse,ErrorDetail};
+pub use api_response::{ApiResponse};
 
 mod models;
 mod handers;
@@ -15,6 +15,7 @@ mod services;
 mod repositories;
 mod utils;
 mod config;
+mod errors;
 
 #[get("/")]
 async fn hello() -> impl Responder {

@@ -7,6 +7,7 @@ use std::{
     path::Path
 };
 use serde_json::{Value, json};
+use sqlx::PgPool;
 use crate::{ApiResponse};
 
 #[derive(Deserialize)]
@@ -111,3 +112,42 @@ pub async fn read_excel_handler(query: web::Query<ExcelQuery>) -> impl Responder
     }
 }
 
+pub async fn import_handler(
+    query: web::Query<ExcelQuery>,
+    pool: web::Data<PgPool>,
+) -> HttpResponse {
+    // 读取 Excel
+    let df = match read_excel(&query.file_path) {
+        Ok(df) => df,
+        Err(e) => return error_response(500, &format!("Excel读取失败: {}", e)),
+    };
+
+    // 转换为 CSV
+    let csv_data = match dataframe_to_csv(&df) {
+        Ok(data) => data,
+        Err(e) => return error_response(500, &e.to_string()),
+    };
+
+    // 执行 COPY
+    match execute_copy(&pool, csv_data).await {
+        Ok(bytes) => HttpResponse::Ok().json(ApiResponse::new(
+            200,
+            &format!("成功导入 {} 字节数据", bytes),
+            None,
+        )),
+        Err(e) => error_response(500, &e.to_string()),
+    }
+}
+fn error_response(code: u16, message: &str) -> HttpResponse {
+    let status = match code {
+        400 => actix_web::http::StatusCode::BAD_REQUEST,
+        500 => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
+        _ => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
+    };
+
+    HttpResponse::build(status).json(ApiResponse::new(
+        code,
+        message,
+        Some(json!({"trace_id": uuid::Uuid::new_v4()})),
+    ))
+}

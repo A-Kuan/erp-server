@@ -1,4 +1,5 @@
 use serde::{Serialize};
+use serde_json::Value;
 
 #[derive(Serialize)]
 pub struct ApiResponse<T: Serialize> {
@@ -8,11 +9,12 @@ pub struct ApiResponse<T: Serialize> {
     pub data: Option<T>,
 }
 
-// 专门用于错误响应的快捷方式
-#[derive(Serialize)]
-pub struct ErrorDetail {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub trace_id: Option<String>, // 可用于分布式追踪
+impl<T: Serialize> ApiResponse<T> {
+    pub fn new(code: u16, message: &str, data: Option<Value>) -> Self {
+        Self {
+            code,
+            message: message.to_string(),
+            data,
+        }
+    }
 }
