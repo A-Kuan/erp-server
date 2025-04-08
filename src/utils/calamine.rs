@@ -1,16 +1,13 @@
-use actix_web::{web, HttpResponse, Responder};
 use calamine::{open_workbook, Reader, Xlsx};
 use polars::prelude::*;
 use serde::Deserialize;
 use std::error::Error;
 use std::path::Path;
-use serde_json::{Value, json};
-use crate::ApiResponse;
 
 #[derive(Deserialize)]
 pub struct ExcelQuery {
     /// Excel 文件的路径，例如 "test.xlsx"
-    file_path: String,
+    pub(crate) file_path: String,
 }
 
 /// 读取 Excel 文件并转换为 DataFrame
@@ -67,44 +64,42 @@ pub fn read_excel<P: AsRef<Path>>(file_path: P) -> Result<DataFrame, Box<dyn Err
     Ok(df)
 }
 
-/// actix-web 的处理函数，接收查询参数并返回读取结果
-/// actix-web 的处理函数，接收查询参数并返回读取结果
-pub async fn read_excel_handler(query: web::Query<ExcelQuery>) -> impl Responder {
-    match read_excel(&query.file_path) {
-        Ok(mut df) => {
-            let mut buffer = Vec::new();
-
-            // 将 DataFrame 转换为 JSON
-            if JsonWriter::new(&mut buffer)
-                .with_json_format(JsonFormat::Json)
-                .finish(&mut df)
-                .is_err()
-            {
-                return HttpResponse::InternalServerError().json(ApiResponse {
-                    code: 500,
-                    message: "DataFrame 转 JSON 失败".to_string(),
-                    data: Value::Null,
-                });
-            }
-
-            // 解析 JSON 字符串为 serde_json::Value
-            match serde_json::from_slice::<Value>(&buffer) {
-                Ok(json_value) => HttpResponse::Ok().json(ApiResponse {
-                    code: 200,
-                    message: "文件解析成功".to_string(),
-                    data: json_value,  // 直接使用解析后的 JSON
-                }),
-                Err(e) => HttpResponse::InternalServerError().json(ApiResponse {
-                    code: 500,
-                    message: "JSON 解析失败".to_string(),
-                    data: json!({"error": e.to_string()}),
-                }),
-            }
-        },
-        Err(e) => HttpResponse::InternalServerError().json(ApiResponse {
-            code: 500,
-            message: "读取 Excel 失败".to_string(),
-            data: json!({"error": e.to_string()}),
-        }),
-    }
-}
+// pub async fn read_excel_handler(query: web::Query<ExcelQuery>) -> impl Responder {
+//     match read_excel(&query.file_path) {
+//         Ok(mut df) => {
+//             let mut buffer = Vec::new();
+//
+//             // 将 DataFrame 转换为 JSON
+//             if JsonWriter::new(&mut buffer)
+//                 .with_json_format(JsonFormat::Json)
+//                 .finish(&mut df)
+//                 .is_err()
+//             {
+//                 return HttpResponse::InternalServerError().json(ApiResponse {
+//                     code: 500,
+//                     message: "DataFrame 转 JSON 失败".to_string(),
+//                     data: Value::Null,
+//                 });
+//             }
+//
+//             // 解析 JSON 字符串为 serde_json::Value
+//             match serde_json::from_slice::<Value>(&buffer) {
+//                 Ok(json_value) => HttpResponse::Ok().json(ApiResponse {
+//                     code: 200,
+//                     message: "文件解析成功".to_string(),
+//                     data: json_value,  // 直接使用解析后的 JSON
+//                 }),
+//                 Err(e) => HttpResponse::InternalServerError().json(ApiResponse {
+//                     code: 500,
+//                     message: "JSON 解析失败".to_string(),
+//                     data: json!({"error": e.to_string()}),
+//                 }),
+//             }
+//         },
+//         Err(e) => HttpResponse::InternalServerError().json(ApiResponse {
+//             code: 500,
+//             message: "读取 Excel 失败".to_string(),
+//             data: json!({"error": e.to_string()}),
+//         }),
+//     }
+// }

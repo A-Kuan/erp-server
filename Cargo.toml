@@ -15,4 +15,6 @@ serde_json = "1.0.140"
 calamine = "0.26.1"
 thiserror = "2.0.12"
 polars = { version = "0.46.0", features = ["lazy","serde","json"] }
+uuid = { version = "1.2", features = ["v4"] }
+
 
