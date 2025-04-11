@@ -4,7 +4,6 @@ use dotenv::dotenv;
 use std::env;
 use crate::handers::{ warehouse,sku,inventory };
 use crate::config::database::create_pool;
-use crate::utils::calamine;
 
 use crate::models::api_response;
 pub use api_response::ApiResponse;
@@ -36,9 +35,9 @@ async fn main() -> Result<()> {
             .app_data(web::PayloadConfig::new(1024 * 1024 * 1024))
             .app_data(web::Data::new(pool.clone()))
             .service(hello)
+            .service(inventory::import_excel_to_db)
             // .route("/read_excel", web::get().to(crate::calamine::read_excel_handler))
             .route("/warehouse", web::get().to(warehouse::warehouse))
-            .route("/read_excel", web::get().to(calamine::read_excel_handler))
             .route("/get_all_sku", web::get().to(sku::skus))
             .route("/inventories",web::get().to(inventory::inventories))
     })
