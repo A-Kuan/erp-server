@@ -6,11 +6,7 @@ use crate::ApiResponse;
 
 pub async fn skus(pool: web::Data<DbPool>) -> impl Responder {
     match sku_service::get_all_sku(pool.get_ref()).await {
-        Ok(sku) => HttpResponse::Ok().json(ApiResponse{
-            code: 200,
-            message: "success".to_string(),
-            data: sku
-        }),
+        Ok(sku) => HttpResponse::Ok().json(ApiResponse::success(sku)),
         Err(e) => HttpResponse::InternalServerError().json(json!({ "error": e })),
     }
 }
