@@ -51,8 +51,6 @@ impl Inventory {
                 Some(batch_id_str.parse()?)
             };
 
-            println!("{:?}", batch_id);
-
             let inventory = Inventory {
                 id: Some(id.as_u128() as i32
                 ),
