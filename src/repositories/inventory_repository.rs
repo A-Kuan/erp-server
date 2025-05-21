@@ -14,7 +14,7 @@ impl InventoryRepository {
         }
 
         let mut query_builder: QueryBuilder<Postgres> =
-            QueryBuilder::new("INSERT INTO inventories (id, warehouse_id, bin_id, sku, quantity, safety_stock, last_updated) ");
+            QueryBuilder::new("INSERT INTO inventories (id, warehouse_id, bin_id, sku, quantity, safety_stock, last_updated, batch_id)");
 
         query_builder.push_values(inventories, |mut b, inv| {
             b.push_bind(inv.id)
@@ -23,7 +23,8 @@ impl InventoryRepository {
                 .push_bind(&inv.sku)
                 .push_bind(inv.quantity)
                 .push_bind(inv.safety_stock)
-                .push_bind(inv.last_updated);
+                .push_bind(inv.last_updated)
+                .push_bind(&inv.batch_id);
         });
 
         // ON CONFLICT 更新 quantity 和 last_updated

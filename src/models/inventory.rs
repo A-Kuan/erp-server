@@ -13,6 +13,7 @@ pub struct Inventory {
     pub quantity: i32,
     pub safety_stock: Option<i32>,
     pub last_updated: DateTime<Utc>,
+    pub batch_id: Option<String>,
 }
 
 impl Inventory {
@@ -22,6 +23,7 @@ impl Inventory {
         let sku_series = df.column("sku")?.str()?;       // 已是字符串
         let quantity_series = df.column("quantity")?.str()?;
         let safety_stock_series = df.column("safety_stock")?.str()?;
+        let batch_id_series = df.column("batch_id")?.str()?;
 
         let mut inventories = Vec::with_capacity(df.height());
 
@@ -42,6 +44,13 @@ impl Inventory {
             };
             let id = Uuid::new_v4(); // 使用 UUID v4 生成一个随机的 UUID
 
+            let batch_id_str = batch_id_series.get(i).ok_or("batch_id is null")?;
+            let batch_id: Option<String> = if batch_id_str.is_empty() {
+                None
+            } else {
+                Some(batch_id_str.parse()?)
+            };
+
             let inventory = Inventory {
                 id: Some(id.as_u128() as i32
                 ),
@@ -51,6 +60,7 @@ impl Inventory {
                 quantity,
                 safety_stock,
                 last_updated,
+                batch_id
             };
             inventories.push(inventory);
         }
