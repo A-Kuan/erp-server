@@ -5,6 +5,7 @@ use crate::handers::{ warehouse,sku,inventory };
 pub fn configure_services(cfg: &mut web::ServiceConfig) {
     cfg.service(hello)
         .service(inventory::import_excel_to_db)
+        .service(inventory::insert_inventory)
         .service(sku::skus)
         .service(sku::create_sku)
         .service(sku::get_sku)

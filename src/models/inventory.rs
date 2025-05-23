@@ -2,18 +2,72 @@ use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use polars::prelude::*;
 use sqlx::FromRow;
-use uuid::Uuid;
+use crate::utils::tool::{ generate_id};
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Inventory {
-    pub id: Option<i32>,
+    pub id: String,
     pub warehouse_id: String,
-    pub bin_id: i32,
+    pub bin_id: String,
     pub sku: String,
     pub quantity: i32,
     pub safety_stock: Option<i32>,
     pub last_updated: DateTime<Utc>,
     pub batch_id: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct InventoryBuilder {
+    pub warehouse_id: String,
+    pub bin_id: String,
+    pub sku: String,
+    pub quantity: i32,
+    pub safety_stock: Option<i32>,
+    pub batch_id: Option<String>,
+}
+
+impl InventoryBuilder {
+    pub fn new(
+        warehouse_id: String,
+        bin_id: String,
+        sku: String,
+        quantity: i32,
+    ) -> Self {
+        InventoryBuilder {
+            warehouse_id,
+            bin_id,
+            sku,
+            quantity,
+            safety_stock: None,
+            batch_id: None,
+        }
+    }
+
+    pub fn safety_stock(mut self, safety_stock: Option<i32>) -> Self {
+        self.safety_stock = safety_stock;
+        self
+    }
+
+    pub fn batch_id(mut self, batch_id: &str) -> Self {
+        self.batch_id = Some(batch_id.to_string());
+        self
+    }
+
+    pub fn build(self) -> Inventory {
+        let id = generate_id();
+        let now = Utc::now();
+
+        Inventory {
+            id,
+            warehouse_id: self.warehouse_id,
+            bin_id: self.bin_id,
+            sku: self.sku,
+            quantity: self.quantity,
+            safety_stock: self.safety_stock,
+            batch_id: self.batch_id,
+            last_updated: now
+        }
+    }
 }
 
 impl Inventory {
@@ -31,7 +85,7 @@ impl Inventory {
             let last_updated = Utc::now();
 
             let bin_id_str = bin_id_series.get(i).ok_or("bin_id is null")?;
-            let bin_id: i32 = bin_id_str.parse()?;
+            let bin_id = bin_id_str.parse()?;
 
             let quantity_str = quantity_series.get(i).ok_or("quantity is null")?;
             let quantity: i32 = quantity_str.parse()?;
@@ -42,7 +96,6 @@ impl Inventory {
             } else {
                 Some(safety_stock_str.parse()?)
             };
-            let id = Uuid::new_v4(); // 使用 UUID v4 生成一个随机的 UUID
 
             let batch_id_str = batch_id_series.get(i).ok_or("batch_id is null")?;
             let batch_id: Option<String> = if batch_id_str.is_empty() {
@@ -52,8 +105,7 @@ impl Inventory {
             };
 
             let inventory = Inventory {
-                id: Some(id.as_u128() as i32
-                ),
+                id: generate_id(),
                 warehouse_id: warehouse_id_series.get(i).ok_or("warehouse_id is null")?.to_string(),
                 bin_id,
                 sku: sku_series.get(i).ok_or("sku is null")?.to_string(),
