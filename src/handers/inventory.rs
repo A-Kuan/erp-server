@@ -1,5 +1,6 @@
 use actix_web::{get, post, web, HttpResponse, Responder};
 use actix_web::error::ErrorInternalServerError;
+use actix_web::web::Data;
 use serde_json::json;
 use crate::ApiResponse;
 use crate::app_config::database::DbPool;
@@ -12,16 +13,24 @@ use crate::utils::calamine::{read_excel, ExcelQuery};
     # 参数
     -
     # 响应
-
-
  */
 #[get("/inventories")]
-pub async fn inventories(pool: web::Data<DbPool>) -> impl Responder {
+pub async fn inventories(pool: Data<DbPool>) -> impl Responder {
     match InventoryService::get_all_inventories(pool.get_ref()).await {
         Ok(inventory) => HttpResponse::Ok().json(ApiResponse::success(inventory)),
         Err(e) => HttpResponse::InternalServerError().json(json!({ "error": e })),
     }
 }
+
+/*
+    添加单个库存明细
+    # 参数
+    # 响应
+ */
+// #[post("/inventories")]
+// pub async fn inventory_insert(pool: Data<DbPool>) {
+//
+// }
 
 // 导入库存明细
 #[post("/insert_excel")]
