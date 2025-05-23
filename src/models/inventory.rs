@@ -8,7 +8,7 @@ use crate::utils::tool::{ generate_id};
 pub struct Inventory {
     pub id: String,
     pub warehouse_id: String,
-    pub bin_id: i32,
+    pub bin_id: String,
     pub sku: String,
     pub quantity: i32,
     pub safety_stock: Option<i32>,
@@ -18,38 +18,33 @@ pub struct Inventory {
 
 #[derive(Debug, Deserialize)]
 pub struct InventoryBuilder {
-    pub id: String,
     pub warehouse_id: String,
-    pub bin_id: i32,
+    pub bin_id: String,
     pub sku: String,
     pub quantity: i32,
     pub safety_stock: Option<i32>,
-    pub last_updated: Option<DateTime<Utc>>,
     pub batch_id: Option<String>,
 }
 
 impl InventoryBuilder {
     pub fn new(
-        id: String,
         warehouse_id: String,
-        bin_id: i32,
+        bin_id: String,
         sku: String,
         quantity: i32,
     ) -> Self {
         InventoryBuilder {
-            id,
             warehouse_id,
             bin_id,
             sku,
             quantity,
             safety_stock: None,
             batch_id: None,
-            last_updated: None,
         }
     }
 
-    pub fn safety_stock(mut self, safety_stock: i32) -> Self {
-        self.safety_stock = Some(safety_stock);
+    pub fn safety_stock(mut self, safety_stock: Option<i32>) -> Self {
+        self.safety_stock = safety_stock;
         self
     }
 
@@ -59,10 +54,11 @@ impl InventoryBuilder {
     }
 
     pub fn build(self) -> Inventory {
+        let id = generate_id();
         let now = Utc::now();
 
         Inventory {
-            id: self.id,
+            id,
             warehouse_id: self.warehouse_id,
             bin_id: self.bin_id,
             sku: self.sku,
@@ -89,7 +85,7 @@ impl Inventory {
             let last_updated = Utc::now();
 
             let bin_id_str = bin_id_series.get(i).ok_or("bin_id is null")?;
-            let bin_id: i32 = bin_id_str.parse()?;
+            let bin_id = bin_id_str.parse()?;
 
             let quantity_str = quantity_series.get(i).ok_or("quantity is null")?;
             let quantity: i32 = quantity_str.parse()?;
