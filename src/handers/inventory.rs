@@ -1,10 +1,10 @@
-use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::{get, patch, post, web, HttpResponse, Responder};
 use actix_web::error::ErrorInternalServerError;
 use actix_web::web::{Data, Json,Query};
 use serde_json::json;
 use crate::ApiResponse;
 use crate::app_config::database::DbPool;
-use crate::models::inventory::{Inventory, InventoryBuilder, InventoryQuery};
+use crate::models::inventory::{Inventory, InventoryBuilder, InventoryQuery, InventoryUpdateQueryBuilder};
 use crate::services::inventory_service::InventoryService;
 use crate::utils::calamine::{read_excel, ExcelQuery};
 
@@ -25,6 +25,10 @@ pub async fn inventories(pool: Data<DbPool>) -> impl Responder {
 /*
     添加单个库存明细
     # 参数
+        bin_id: String
+        quantity: i64
+        sku: String
+        warehouse_id: String
     # 响应
  */
 #[post("/inventories")]
@@ -60,13 +64,58 @@ pub async fn import_excel_to_db(query: web::Query<ExcelQuery>, pool: web::Data<D
     Ok(HttpResponse::Ok().body("数据导入成功"))
 }
 
-#[get("/inventory")]
+/*
+    获取单个库存明细
+    # 参数
+        sku: String
+    # 响应
+        Inventory
+ */
+#[get("/inventory/sku")]
 pub async fn get_inventories_by_sku(
     pool: Data<DbPool>,
     query: Query<InventoryQuery>,
 ) -> impl Responder  {
-    match InventoryService::get_inventory_by_sku(pool.get_ref(), &*query.sku).await {
+    // 首先检查是否有提供sku参数
+    let sku = match &query.sku {
+        Some(sku) => sku,
+        None => return HttpResponse::BadRequest().json(json!({
+            "error": "sku parameter is required"
+        })),
+    };
+    match InventoryService::get_inventory_by_sku(pool.get_ref(), sku).await {
         Ok(inventory) => HttpResponse::Ok().json(ApiResponse::success(inventory)),
         Err(e) => HttpResponse::InternalServerError().json(json!({ "error": e })),
     }
 }
+#[get("/inventory/id")]
+pub async fn get_inventories_by_id(
+    pool: Data<DbPool>,
+    query: Query<InventoryQuery>,
+)-> impl Responder  {
+    let id = match &query.id {
+        Some(id) => id,
+        None => return HttpResponse::BadRequest().json(json!({
+            "error": "id parameter is required"
+        })),
+    };
+    match InventoryService::get_inventory_by_id(pool.get_ref(), id).await {
+        Ok(inventory) => HttpResponse::Ok().json(ApiResponse::success(inventory)),
+        Err(e) => HttpResponse::InternalServerError().json(json!({ "error": e })),
+    }
+}
+
+/*
+    修改明细
+ */
+// #[patch("/inventory")]
+// pub async fn update_inventory(
+//     pool: Data<DbPool>,
+//     query: Query<InventoryUpdateQueryBuilder>,
+// ) -> impl Responder {
+//     let inventory = InventoryService::get_inventory_by_sku(pool.get_ref()).await?;
+//     match InventoryService::update_inventory(pool.get_ref(), query).await {
+//         Ok(inventory) => HttpResponse::Ok().json(ApiResponse::success(inventory)),
+//         Err(e) => HttpResponse::InternalServerError().json(json!({ "error": e })),
+//     }
+// }
