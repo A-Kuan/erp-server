@@ -15,6 +15,12 @@ impl InventoryService {
             .await
             .map_err(|e| e.to_string())
     }
+
+    pub async fn get_inventory_by_sku(pool: &PgPool, sku: &str) -> Result<Option<Inventory>, String> {
+        InventoryRepository::get_inventory_by_sku(pool,sku)
+            .await.
+            map_err(|e| e.to_string())
+    }
     pub async fn get_all_inventories(pool: &PgPool) -> Result<Vec<Inventory>, String> {
         InventoryRepository::get_all_inventory(pool)
             .await

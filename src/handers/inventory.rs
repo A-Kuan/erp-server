@@ -1,10 +1,10 @@
 use actix_web::{get, post, web, HttpResponse, Responder};
 use actix_web::error::ErrorInternalServerError;
-use actix_web::web::{Data, Json};
+use actix_web::web::{Data, Json,Query};
 use serde_json::json;
 use crate::ApiResponse;
 use crate::app_config::database::DbPool;
-use crate::models::inventory::{Inventory, InventoryBuilder};
+use crate::models::inventory::{Inventory, InventoryBuilder, InventoryQuery};
 use crate::services::inventory_service::InventoryService;
 use crate::utils::calamine::{read_excel, ExcelQuery};
 
@@ -58,5 +58,15 @@ pub async fn import_excel_to_db(query: web::Query<ExcelQuery>, pool: web::Data<D
         .map_err(ErrorInternalServerError)?;
 
     Ok(HttpResponse::Ok().body("数据导入成功"))
+}
 
+#[get("/inventory")]
+pub async fn get_inventories_by_sku(
+    pool: Data<DbPool>,
+    query: Query<InventoryQuery>,
+) -> impl Responder  {
+    match InventoryService::get_inventory_by_sku(pool.get_ref(), &*query.sku).await {
+        Ok(inventory) => HttpResponse::Ok().json(ApiResponse::success(inventory)),
+        Err(e) => HttpResponse::InternalServerError().json(json!({ "error": e })),
+    }
 }
