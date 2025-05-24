@@ -3,6 +3,9 @@ use sqlx::{PgPool, QueryBuilder, Postgres};
 
 use crate::models::inventory::Inventory;
 use crate::app_config::TransactionExt;
+use sqlx::types::chrono::{ DateTime, Utc };
+
+
 pub struct InventoryRepository;
 
 impl InventoryRepository {
@@ -46,7 +49,31 @@ impl InventoryRepository {
             .await
     }
 
-    // 插入sku
+    // 获取单个库存信息
+    pub async fn get_inventory_by_sku(pool: &PgPool, sku: &str) -> Result<Option<Inventory>,sqlx::Error> {
+        let inventory = sqlx::query_as!(
+            Inventory,
+            r#"
+            SELECT
+                id,
+                warehouse_id,
+                bin_id,
+                sku,
+                quantity,
+                safety_stock,
+                last_updated as "last_updated!: DateTime<Utc>",
+                batch_id
+            FROM inventories
+            WHERE sku = $1
+            "#,
+            sku
+        )
+            .fetch_optional(pool)  // 使用 fetch_optional 因为可能找不到记录
+            .await?;
+        Ok(inventory)
+    }
+
+    // 插入inventory
     pub async fn insert_inventory(pool: &PgPool, inv: Inventory) -> Result<Inventory,sqlx::Error> {
         pool.with_transaction(|tx| {
             Box::pin(async move {

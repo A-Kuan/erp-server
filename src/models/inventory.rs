@@ -15,6 +15,10 @@ pub struct Inventory {
     pub last_updated: DateTime<Utc>,
     pub batch_id: Option<String>,
 }
+#[derive(Deserialize)]
+pub struct InventoryQuery {
+    pub sku: String,
+}
 
 #[derive(Debug, Deserialize)]
 pub struct InventoryBuilder {
