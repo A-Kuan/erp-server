@@ -7,6 +7,8 @@ pub fn configure_services(cfg: &mut web::ServiceConfig) {
         .service(inventory::import_excel_to_db)
         .service(inventory::insert_inventory)
         .service(inventory::get_inventories_by_sku)
+        .service(inventory::get_inventories_by_id)
+        .service(inventory::update_inventory)
         .service(sku::skus)
         .service(sku::create_sku)
         .service(sku::get_sku)

@@ -17,9 +17,21 @@ pub struct Inventory {
 }
 #[derive(Deserialize)]
 pub struct InventoryQuery {
-    pub sku: String,
+    pub sku: Option<String>,
+    pub id: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct InventoryUpdateBuilder {
+    pub id: String,
+    pub warehouse_id: Option<String>,
+    pub sku: Option<String>,
+    pub bin_id: Option<String>,
+    pub quantity: Option<i32>,
+    pub safety_stock: Option<i32>,
+    pub batch_id: Option<String>,
+
+}
 #[derive(Debug, Deserialize)]
 pub struct InventoryBuilder {
     pub warehouse_id: String,
@@ -74,6 +86,57 @@ impl InventoryBuilder {
     }
 }
 
+impl InventoryUpdateBuilder{
+    pub fn new (
+        id: String,
+    ) -> Self {
+        InventoryUpdateBuilder {
+            id,
+            warehouse_id: None,
+            sku: None,
+            bin_id: None,
+            quantity: None,
+            safety_stock: None,
+            batch_id: None,
+        }
+    }
+    pub fn warehouse_id(mut self, warehouse_id: &str) -> Self{
+        self.warehouse_id = Some(warehouse_id.to_string());
+        self
+    }
+    pub fn sku(mut self, sku: &str) -> Self {
+        self.sku = Some(sku.to_string());
+        self
+    }
+    pub fn bin_id(mut self, bin_id: &str) -> Self {
+        self.bin_id = Some(bin_id.to_string());
+        self
+    }
+    pub fn quantity(mut self, quantity: i32) -> Self {
+        self.quantity = Some(quantity);
+        self
+    }
+    pub fn safety_stock(mut self, safety_stock: Option<i32>) -> Self {
+        self.safety_stock = safety_stock;
+        self
+    }
+    pub fn batch_id(mut self, batch_id: &str) -> Self {
+        self.batch_id = Some(batch_id.parse().unwrap());
+        self
+    }
+
+    pub fn build(self) -> InventoryUpdateBuilder {
+        InventoryUpdateBuilder {
+            id: self.id,
+            warehouse_id: self.warehouse_id,
+            bin_id: self.bin_id,
+            sku: self.sku,
+            quantity: self.quantity,
+            safety_stock: self.safety_stock,
+            batch_id: self.batch_id,
+        }
+    }
+}
 impl Inventory {
     pub fn dataframe_to_inventory_vec(df: &DataFrame) -> Result<Vec<Inventory>, Box<dyn std::error::Error>> {
         let warehouse_id_series = df.column("warehouse_id")?.str()?; // 已是字符串

@@ -49,7 +49,7 @@ impl InventoryRepository {
             .await
     }
 
-    // 获取单个库存信息
+    // 通过sku获取单个库存信息
     pub async fn get_inventory_by_sku(pool: &PgPool, sku: &str) -> Result<Option<Inventory>,sqlx::Error> {
         let inventory = sqlx::query_as!(
             Inventory,
@@ -69,6 +69,29 @@ impl InventoryRepository {
             sku
         )
             .fetch_optional(pool)  // 使用 fetch_optional 因为可能找不到记录
+            .await?;
+        Ok(inventory)
+    }
+    // 通过id获取单个库存
+    pub async fn get_inventory_by_id(pool: &PgPool, id: &str) -> Result<Inventory,sqlx::Error> {
+        let inventory = sqlx::query_as!(
+            Inventory,
+            r#"
+            SELECT
+                id,
+                warehouse_id,
+                bin_id,
+                sku,
+                quantity,
+                safety_stock,
+                last_updated as "last_updated!: DateTime<Utc>",
+                batch_id
+            FROM inventories
+            WHERE id = $1
+            "#,
+            id
+        )
+            .fetch_one(pool)
             .await?;
         Ok(inventory)
     }
@@ -100,5 +123,37 @@ impl InventoryRepository {
         }).await
     }
 
+    // 更新inventory
+    pub async fn update_inventory(pool: &PgPool, inv: Inventory) -> Result<Inventory,sqlx::Error> {
+        pool.with_transaction(|tx| {
+            Box::pin(async move {
+                sqlx::query_as::<_, Inventory>(
+                r#"
+                    UPDATE inventories
+                    SET
+                        warehouse_id = $2,
+                        bin_id = $3,
+                        sku = $4,
+                        quantity = $5,
+                        safety_stock = $6,
+                        batch_id = $7,
+                        last_updated = $8
+                    WHERE id = $1
+                    RETURNING *
+                    "#
+                )
+                    .bind(&inv.id)
+                    .bind(&inv.warehouse_id)
+                    .bind(&inv.bin_id)
+                    .bind(&inv.sku)
+                    .bind(&inv.quantity)
+                    .bind(&inv.safety_stock)
+                    .bind(&inv.batch_id)
+                    .bind(&inv.last_updated)
+                    .fetch_one(&mut *tx)
+                    .await
+            })
+        }).await
+    }
 
 }
