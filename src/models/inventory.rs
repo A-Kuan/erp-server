@@ -21,15 +21,15 @@ pub struct InventoryQuery {
     pub id: Option<String>,
 }
 
-#[derive(Deserialize)]
-pub struct InventoryUpdateQueryBuilder {
-    id: String,
-    warehouse_id: Option<String>,
-    sku: Option<String>,
-    bin_id: Option<String>,
-    quantity: Option<i32>,
-    safety_stock: Option<i32>,
-    batch_id: Option<String>,
+#[derive(Debug, Deserialize)]
+pub struct InventoryUpdateBuilder {
+    pub id: String,
+    pub warehouse_id: Option<String>,
+    pub sku: Option<String>,
+    pub bin_id: Option<String>,
+    pub quantity: Option<i32>,
+    pub safety_stock: Option<i32>,
+    pub batch_id: Option<String>,
 
 }
 #[derive(Debug, Deserialize)]
@@ -86,11 +86,11 @@ impl InventoryBuilder {
     }
 }
 
-impl InventoryUpdateQueryBuilder{
+impl InventoryUpdateBuilder{
     pub fn new (
         id: String,
     ) -> Self {
-        InventoryUpdateQueryBuilder {
+        InventoryUpdateBuilder {
             id,
             warehouse_id: None,
             sku: None,
@@ -125,9 +125,8 @@ impl InventoryUpdateQueryBuilder{
         self
     }
 
-    pub fn build(self) -> InventoryUpdateQueryBuilder {
-        let now = Utc::now();
-        InventoryUpdateQueryBuilder {
+    pub fn build(self) -> InventoryUpdateBuilder {
+        InventoryUpdateBuilder {
             id: self.id,
             warehouse_id: self.warehouse_id,
             bin_id: self.bin_id,

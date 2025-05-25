@@ -4,7 +4,7 @@ use actix_web::web::{Data, Json,Query};
 use serde_json::json;
 use crate::ApiResponse;
 use crate::app_config::database::DbPool;
-use crate::models::inventory::{Inventory, InventoryBuilder, InventoryQuery, InventoryUpdateQueryBuilder};
+use crate::models::inventory::{Inventory, InventoryBuilder, InventoryQuery, InventoryUpdateBuilder};
 use crate::services::inventory_service::InventoryService;
 use crate::utils::calamine::{read_excel, ExcelQuery};
 
@@ -108,14 +108,13 @@ pub async fn get_inventories_by_id(
 /*
     修改明细
  */
-// #[patch("/inventory")]
-// pub async fn update_inventory(
-//     pool: Data<DbPool>,
-//     query: Query<InventoryUpdateQueryBuilder>,
-// ) -> impl Responder {
-//     let inventory = InventoryService::get_inventory_by_sku(pool.get_ref()).await?;
-//     match InventoryService::update_inventory(pool.get_ref(), query).await {
-//         Ok(inventory) => HttpResponse::Ok().json(ApiResponse::success(inventory)),
-//         Err(e) => HttpResponse::InternalServerError().json(json!({ "error": e })),
-//     }
-// }
+#[patch("/inventory/update")]
+pub async fn update_inventory(
+    pool: Data<DbPool>,
+    query: Query<InventoryUpdateBuilder>,
+) -> impl Responder {
+    match InventoryService::update_inventory(pool.get_ref(), query.into_inner()).await {
+        Ok(inventory) => HttpResponse::Ok().json(ApiResponse::success(inventory)),
+        Err(e) => HttpResponse::InternalServerError().json(json!({ "error": e })),
+    }
+}

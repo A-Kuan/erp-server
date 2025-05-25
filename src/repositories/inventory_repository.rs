@@ -73,7 +73,7 @@ impl InventoryRepository {
         Ok(inventory)
     }
     // 通过id获取单个库存
-    pub async fn get_inventory_by_id(pool: &PgPool, id: &str) -> Result<Option<Inventory>,sqlx::Error> {
+    pub async fn get_inventory_by_id(pool: &PgPool, id: &str) -> Result<Inventory,sqlx::Error> {
         let inventory = sqlx::query_as!(
             Inventory,
             r#"
@@ -91,7 +91,7 @@ impl InventoryRepository {
             "#,
             id
         )
-            .fetch_optional(pool)  // 使用 fetch_optional 因为可能找不到记录
+            .fetch_one(pool)
             .await?;
         Ok(inventory)
     }
