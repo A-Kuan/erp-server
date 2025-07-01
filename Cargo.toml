@@ -17,5 +17,6 @@ thiserror = "2.0.12"
 polars = { version = "0.46.0", features = ["lazy","serde","json"] }
 uuid = { version = "1.2", features = ["v7"] }
 config = "0.15.9"
+actix-cors = "0.7.0"
 
 

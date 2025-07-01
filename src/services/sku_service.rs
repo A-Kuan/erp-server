@@ -10,13 +10,6 @@ impl SkuService {
             .map_err(|e| e.to_string())
     }
 
-    pub async fn create_sku(pool: &PgPool, sku: Sku) -> Result<Sku, String> {
-        SkuRepository::create_sku(pool,sku)
-            .await
-            .map_err(|e| e.to_string())
-
-    }
-
     pub async fn get_sku(pool: &PgPool, sku: &str) -> Result<Option<Sku>, String> {
         SkuRepository::get_sku(pool, sku)
             .await

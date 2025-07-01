@@ -1,4 +1,5 @@
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
+use actix_cors::Cors;
 use anyhow::Result;
 use config::{Config, Environment};
 use crate::app_config::database::{
@@ -47,6 +48,16 @@ async fn main() -> Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .wrap(
+                Cors::default()
+                    .allowed_origin("http://localhost:5173")
+                    .allowed_methods(vec!["GET", "POST"])
+                    // .allowed_headers(vec![
+                    //     actix_web::http::header::CONTENT_TYPE,
+                    //     actix_web::http::header::AUTHORIZATION,
+                    // ])
+                    .max_age(3600),
+            )
             .app_data(web::PayloadConfig::new(config.max_upload_size))
             .app_data(web::Data::new(pool.clone()))
             .configure(configure_services)
